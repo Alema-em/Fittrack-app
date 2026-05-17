@@ -9,12 +9,25 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+const requiredEnv = name => {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing required environment variable: ${name}`)
+  return value
+}
+
+const requiredPort = name => {
+  const port = Number(requiredEnv(name))
+  if (!Number.isInteger(port) || port <= 0) throw new Error(`Invalid environment variable: ${name}`)
+  return port
+}
+
 // ── Database pool ─────────────────────────────────────────────
 const pool = mysql.createPool({
-  host:             process.env.DB_HOST || 'localhost',
-  user:             process.env.DB_USER || 'admin_user',
-  password:         process.env.DB_PASS || 'fittrack_admin_2025',
-  database:         process.env.DB_NAME || 'fittrack',
+  host:             requiredEnv('DB_HOST'),
+  port:             requiredPort('DB_PORT'),
+  user:             requiredEnv('DB_USER'),
+  password:         requiredEnv('DB_PASS'),
+  database:         requiredEnv('DB_NAME'),
   waitForConnections: true,
   connectionLimit:  10,
   decimalNumbers:   true, // returns FLOAT as JS number, not string
@@ -692,4 +705,4 @@ app.get('/dbstats', auth, async (req, res) => {
 })
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => console.log(`✅ FitTrack API → http://localhost:${PORT}`))
+app.listen(PORT, () => console.log(`✅ FitTrack API listening on port ${PORT}`))
