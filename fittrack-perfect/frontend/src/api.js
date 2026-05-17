@@ -2,9 +2,15 @@ let _token = null
 export const setToken = t => { _token = t }
 export const getToken = () => _token
 
-const B = '/api'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const B = API_URL.replace(/\/$/, '')
 const H = () => ({ 'Content-Type': 'application/json', ...(_token ? { Authorization: `Bearer ${_token}` } : {}) })
-const go = async r => { const d = await r.json(); if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`); return d }
+const go = async r => {
+  const contentType = r.headers.get('content-type') || ''
+  const d = contentType.includes('application/json') ? await r.json() : null
+  if (!r.ok) throw new Error(d?.error || `HTTP ${r.status}`)
+  return d
+}
 
 export const health       = ()        => fetch(`${B}/health`).then(go)
 export const apiMe        = ()        => fetch(`${B}/auth/me`, { headers: H() }).then(go)
