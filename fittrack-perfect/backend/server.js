@@ -21,6 +21,14 @@ const requiredPort = name => {
   return port
 }
 
+const optionalInt = (name, fallback) => {
+  const value = process.env[name]
+  if (!value) return fallback
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed <= 0) throw new Error(`Invalid environment variable: ${name}`)
+  return parsed
+}
+
 // ── Database pool ─────────────────────────────────────────────
 const pool = mysql.createPool({
   host:             requiredEnv('DB_HOST'),
@@ -29,6 +37,9 @@ const pool = mysql.createPool({
   password:         requiredEnv('DB_PASS'),
   database:         requiredEnv('DB_NAME'),
   waitForConnections: true,
+  connectTimeout:   optionalInt('DB_CONNECT_TIMEOUT_MS', 10000),
+  enableKeepAlive:  true,
+  keepAliveInitialDelay: 0,
   connectionLimit:  10,
   decimalNumbers:   true, // returns FLOAT as JS number, not string
 })
